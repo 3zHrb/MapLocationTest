@@ -16,6 +16,8 @@ class ViewController: UIViewController{
     @IBOutlet weak var addressLabel: UILabel!
     var goButton: UIButton!
     
+    var routeColorCounter: Int?
+    
     var centerMaplOcationDot: UIView!
     
     var locationManager = CLLocationManager()
@@ -39,6 +41,8 @@ class ViewController: UIViewController{
         goButton.layer.cornerRadius = 40
         goButton.backgroundColor = .systemBlue
         goButton.addTarget(self, action: #selector(goToPressed), for: .touchUpInside)
+        
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
         
         self.view.addSubview(goButton)
         self.view.addSubview(centerMaplOcationDot)
@@ -162,7 +166,12 @@ class ViewController: UIViewController{
         request.transportType = .automobile
         request.requestsAlternateRoutes = true
         
+        
         var direction: MKDirections = MKDirections(request: request)
+        
+        direction.cancel()
+        mapView.removeOverlays(mapView.overlays)
+        routeColorCounter = 0
         
         direction.calculate { (response, error) in
             
@@ -178,8 +187,10 @@ class ViewController: UIViewController{
             }
             
             for route in response!.routes{
+                
                 self.mapView.addOverlay(route.polyline, level: .aboveRoads)
                 var boundary = route.polyline.boundingMapRect
+                print("Boundary is: \(boundary)")
                 self.mapView.setVisibleMapRect(boundary, animated: true)
                 
             }
@@ -221,9 +232,25 @@ extension ViewController: MKMapViewDelegate{
     }
     
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
-        var overLayRender1 = MKPolygonRenderer(overlay: overlay)
+        var overLayRender1 = MKPolylineRenderer(overlay: overlay)
+        if routeColorCounter == 0{
         overLayRender1.strokeColor = .systemBlue
-        overLayRender1.lineWidth = 1
+            overLayRender1.lineWidth = 5
+            overLayRender1.alpha = 0.5
+        }
+        else if routeColorCounter == 1 {
+        overLayRender1.strokeColor = .red
+            overLayRender1.lineWidth = 10
+            overLayRender1.alpha = 0.5
+        }else {
+            overLayRender1.strokeColor = .cyan
+            overLayRender1.lineWidth = 15
+            overLayRender1.alpha = 0.5
+        }
+        
+        
+        routeColorCounter = routeColorCounter! + 1
+        
         return overLayRender1
     }
     
